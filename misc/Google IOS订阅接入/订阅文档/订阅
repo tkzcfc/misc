@@ -1,0 +1,140 @@
+
+https://github.com/kkSourceDev/TrivialDrive
+
+
+https://www.cnblogs.com/lovexb/p/4671390.html
+
+
+https://blog.csdn.net/qq_39860954/article/details/78880767
+
+
+https://blog.csdn.net/qq_39860954/article/details/84190956?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase
+
+将OAuth 2.0用于服务器到服务器应用程序
+https://developers.google.com/identity/protocols/oauth2/service-account
+
+https://developer.android.com/google/play/billing/billing_best_practices
+
+
+
+文档-------------
+https://developers.google.com/android-publisher/api-ref/purchases/subscriptions
+
+
+https://github.com/android/play-billing-samples/tree/master/ClassyTaxiJava
+subscriptions
+
+				
+服务器文档
+https://www.cnblogs.com/Fushengliangnian/p/11190538.html
+
+服务器文档11
+https://developer.android.google.cn/google/play/developer-api.html#publishing_api_overview
+				
+				
+Google开发者后台
+https://play.google.com/apps/publish/?account=5910283981600060265#SubscriptionsSetupPlace:p=com.newanim.game.nihtest&appid=4972226966571891495
+				
+				
+
+-- Google订阅状态码
+-- https://developer.android.com/google/play/billing/realtime_developer_notifications
+
+
+客户端接入注意事项：
+  确保包名一致
+  要使用正式签名打包,签名要与上传至Google后台的一致
+  要使用测试账号测试，管理员要添加测试人员账号，还要发送测试邀请，测试人员通过链接同意邀请之后才能测试（重要）
+  要测试的订阅商品状态为有效
+  确保 IabHelper 初始化的 base64PublicKey 与Google后台一致
+
+订阅支付流程：
+  1)支付失败：
+	客户端唤起订阅支付（调用SubscriptionBuy） -> 用户支付失败 -> 回调至lua函数 G_GooglePayFailCallFunc
+  2)支付成功:
+	客户端唤起订阅支付（调用SubscriptionBuy） -> 用户支付成功 -> 
+	回调至 mPurchaseFinishedListener.onIabPurchaseFinished 执行异步查询商品信息  -> 
+	查询完毕回调至 mGetInventoryListenerInPurchase.onQueryInventoryFinished 调用consumeAll函数  ->   
+	将具体订单信息回调至lua函数 G_GoogleConsumerCallFunc ->
+	G_GoogleConsumerCallFunc调用 Utils:PaySuccess 函数向服务器发送本次订单信息 ->
+	服务器验证完毕发送相应商品给客户端
+	
+	
+		
+Java层新增函数：
+	GooglePlayHelper中新增函数:
+			public static void SubscriptionBuy(String sku, String payLoadString)
+	使用订阅支付时调用此函数,参数与GoogleBuy一致,sku为产品ID，payLoadString为自定义数据，游戏中是服务器生成的订单ID
+  
+Lua层新增函数：
+	function NativeManager:googleSubscription(goodsStr, orderId) 调用java层SubscriptionBuy函数
+	
+新增协议：
+	PushSubscriptionInfoRequest 订阅信息查询
+	PushSubscriptionInfoReply	订阅信息查询回复
+	
+订阅测试界面：
+	app/layer/layers/subscribe/SubscribeTest.lua
+	使用方式：
+	require("app.layers.subscribe.SubscribeTest"):create():addToNode(sceneManager:getRunningScene())
+
+
+
+
+
+
+
+IOS订阅
+
+苹果服务器POST数据很大，服务器接收时注意接收缓存大小设置
+
+-- IOS订阅状态码
+-- https://developer.apple.com/documentation/appstoreservernotifications/notification_type
+-- https://help.apple.com/app-store-connect/#/dev06f89ce98
+
+客户端参考文章
+https://www.jianshu.com/p/687c34c11002
+https://www.jianshu.com/p/9531a85ba165
+
+沙盒账号测试
+https://help.apple.com/app-store-connect/#/dev7e89e149d
+
+
+productidtransaction   等待消费订单 （产品ID-订单）
+
+productidreceipt（产品ID-收据）
+
+notConsumerProductIds
+
+
+[self.productidtransaction setObject:transaction forKey:payment.productIdentifier];
+
+
+APP登录成功 -> nativeManager:queryOrder() -> dealNotConsumerOrder 处理未消费的订单
+
+
+
+dealTransaction
+
+
+已经付款但是没有消费
+
+保存没有消费的订单和交易的集合
+productidtransaction
+
+//保存没有消费的订单和凭据的集合
+productidreceipt;
+
+
+typedef NS_ENUM(NSInteger, SKPaymentTransactionState) {
+    SKPaymentTransactionStatePurchasing,    // Transaction is being added to the server queue.
+    SKPaymentTransactionStatePurchased,     // Transaction is in queue, user has been charged.  Client should complete the transaction.
+    SKPaymentTransactionStateFailed,        // Transaction was cancelled or failed before being added to the server queue.
+    SKPaymentTransactionStateRestored,      // Transaction was restored from user's purchase history.  Client should complete the transaction.
+    SKPaymentTransactionStateDeferred API_AVAILABLE(ios(8.0), macos(10.10), watchos(6.2)),   // The transaction is in the queue, but its final status is pending external action.
+
+
+
+沙盒账号点击购买直接返回结果问题
+https://developer.apple.com/forums/thread/130742
+
