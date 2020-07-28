@@ -25,7 +25,3 @@ local function smooth_pulse(e0, e1, e2, e3, x)
 	return smooth(e0, e1, x) - smooth(e2, e3, x)
 end
 
-
-
-
-
