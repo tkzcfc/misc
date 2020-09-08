@@ -23,7 +23,9 @@ https://blog.csdn.net/qq_28644183/article/details/71629908
 		print(k, v)
 	end
 
-_s永远不变,_var为可变值
+-- _f 迭代函数
+-- _s 不可变状态
+-- _var 控制变量初始值
 ]]
 
 

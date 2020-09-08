@@ -17,10 +17,14 @@ end
 local oldPrint = print
 local logFd = io.open("client.log", "wb+")
 local function logFile(...)
-	local t = {...}
-	local content = "\n[LOG]:" .. table.concat(t, " ")
-	logFd:write(content)
 	oldPrint(...)
+
+	local log = ""
+	for k,v in pairs({...}) do
+		log = log .. tostring(v) .. "  "
+	end
+	local content = "\n[LOG]:" .. log
+	logFd:write(content)
 end
 print = logFile
 

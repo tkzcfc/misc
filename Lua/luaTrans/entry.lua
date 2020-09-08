@@ -12,7 +12,9 @@ local cli = tcp.new('127.0.0.1', 7000)
 
 local ft
 local o_ft
-local file = [[F:\TranTest\EffectNodes-BuildForWin32-2014-9-26.zip]]
+
+-- 要发送的文件路径
+local file = [[./BehaviacSetup_3.6.39.exe]]
 
 cli.event:on("connect", function(suc)
 	if suc then

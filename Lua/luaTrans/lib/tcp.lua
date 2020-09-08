@@ -147,6 +147,8 @@ function SocketTCP:startRecv()
 
 	if self.isClient then
 		self.co_recv = oRoutine(o_loop(function()
+		
+			-- 第一种接收逻辑
 			local body, status, partial = self.tcp:receive("*a")
     		if status == STATUS_CLOSED or status == STATUS_NOT_CONNECTED then
     			log('tcp receive error:', status)
@@ -164,10 +166,8 @@ function SocketTCP:startRecv()
 
 			if partial then
 		    	self.buffer = self.buffer .. partial
-			print("recv partial", #partial)
 		    else
 		    	self.buffer = self.buffer .. body
-			print("recv body", #body)
 		    end
 
 		    -- 0xffffffff

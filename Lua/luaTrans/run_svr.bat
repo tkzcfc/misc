@@ -1,2 +1,2 @@
-lua C:\Users\ASus\Desktop\luaTrans\luaTest\svr.lua
+lua %cd%\svr.lua
 pause

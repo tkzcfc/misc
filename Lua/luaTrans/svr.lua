@@ -17,10 +17,14 @@ end
 local oldPrint = print
 local logFd = io.open("svr.log", "wb+")
 local function logFile(...)
-	local t = {...}
-	local content = "\n[LOG]:" .. table.concat(t, " ")
-	logFd:write(content)
 	oldPrint(...)
+
+	local log = ""
+	for k,v in pairs({...}) do
+		log = log .. tostring(v) .. "  "
+	end
+	local content = "\n[LOG]:" .. log
+	logFd:write(content)
 end
 print = logFile
 
@@ -28,7 +32,8 @@ local FileTransfer = require('FileTransfer')
 
 local ft
 local o_ft
-local file = [[F:/TranTest/recv_test.zip]]
+-- 接收的文件路径
+local file = [[./recv_test.zip]]
 
 
 local function do_svr()

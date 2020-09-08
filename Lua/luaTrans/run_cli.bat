@@ -1,2 +1,2 @@
-lua C:\Users\ASus\Desktop\luaTrans\luaTest\main.lua
+lua %cd%\main.lua
 pause
