@@ -1,3 +1,7 @@
+-- @Author : fangcheng
+-- @Date   : 2020-07-22 18:31:16
+-- @remark : 文件相关操作工具类
+
 local lfs = require("lfs")
 
 local FileTool = {}

@@ -1,3 +1,6 @@
+-- @Author : fangcheng
+-- @Date   : 2020-07-22 18:31:16
+-- @remark : 未用到，准备做一个远程管理工具，这个类用于指令解析执行
 
 local FileTool = require('FileTool')
 local FileTransfer = require('FileTransfer')

@@ -1,3 +1,7 @@
+-- @Author : fangcheng
+-- @Date   : 2020-09-09 17:39:40
+-- @remark : 拷贝自cocos,主要使用class函数
+
 require("lfs")
 
 --[[

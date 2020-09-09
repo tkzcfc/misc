@@ -1,2 +1,2 @@
-lua %cd%\main.lua
+lua %cd%\cli.lua
 pause

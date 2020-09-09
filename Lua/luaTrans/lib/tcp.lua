@@ -1,3 +1,7 @@
+-- @Author : fangcheng
+-- @Date   : 2020-07-22 18:31:16
+-- @remark : TCP套接字封装(包括分包逻辑)
+
 local socket = require("socket")
 local EventEmitter = require('EventEmitter')
 
@@ -97,10 +101,10 @@ function SocketTCP:send(data)
     	    local count, status = fd:send(data)
     	    
     	    if (status == STATUS_TIMEOUT) then
-    	        log("send data timeout, now yield. fd (%s)", fd)
+    	        log("send data timeout, now yield. fd:", fd)
     	        coroutine.yield()
     	    elseif (status == STATUS_CLOSED) then
-    	        log("closed by peer, fd (%s)", fd)
+    	        log("closed by peer, fd:", fd)
     	        self:disconnect()
     	        break
     	    end

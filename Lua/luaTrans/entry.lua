@@ -14,7 +14,7 @@ local ft
 local o_ft
 
 -- 要发送的文件路径
-local file = [[./BehaviacSetup_3.6.39.exe]]
+local file = [[./testfile.exe]]
 
 cli.event:on("connect", function(suc)
 	if suc then

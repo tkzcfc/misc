@@ -1,3 +1,7 @@
+-- @Author : fangcheng
+-- @Date   : 2020-07-22 18:31:16
+-- @remark : TCP客户端
+
 local tcp = require('tcp')
 
 local Client = class('Client')

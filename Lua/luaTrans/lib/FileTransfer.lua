@@ -1,5 +1,8 @@
-local FileTool = require('FileTool')
+-- @Author : fangcheng
+-- @Date   : 2020-07-22 18:31:16
+-- @remark : 文件传输(发送/接收)
 
+local FileTool = require('FileTool')
 
 -- 内容是否启用base64加密文本
 local USE_BASE64_DECODE = true

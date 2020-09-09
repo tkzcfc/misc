@@ -33,7 +33,7 @@ local FileTransfer = require('FileTransfer')
 local ft
 local o_ft
 -- 接收的文件路径
-local file = [[./recv_test.zip]]
+local file = [[./recv_test.exe]]
 
 
 local function do_svr()
