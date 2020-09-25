@@ -1,2 +1,2 @@
-lua %cd%\svr.lua
+%cd%/lua_exe/lua.exe %cd%/svr.lua
 pause

@@ -25,7 +25,7 @@ cli.event:on("connect", function(suc)
 			cli:send(data)
 		end, true)
 		-- 是否开启限速
-		ft.flowControl.enable = false
+		ft.flowControl.enable = true
 		-- 每秒最大传输字节数
 		ft.flowControl.maxSpeed = 1024*1024
 

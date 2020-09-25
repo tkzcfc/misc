@@ -1,2 +1,2 @@
-lua %cd%\cli.lua
+%cd%/lua_exe/lua.exe %cd%/cli.lua
 pause
