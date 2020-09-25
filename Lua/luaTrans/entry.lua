@@ -24,7 +24,10 @@ cli.event:on("connect", function(suc)
 			-- print('send', #data, data)
 			cli:send(data)
 		end, true)
-		ft.flowControl.enable = true
+		-- 是否开启限速
+		ft.flowControl.enable = false
+		-- 每秒最大传输字节数
+		ft.flowControl.maxSpeed = 1024*1024
 
 		ft:setEventCallback(function(event, data)
 			print("[EVENT]", system:gettime(), "sender", event, data) 
