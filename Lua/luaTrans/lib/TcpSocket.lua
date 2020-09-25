@@ -36,7 +36,7 @@ function SocketTCP:bind()
 end
 
 function SocketTCP:listen(maxCount)
-	local result,err = self.tcp:listen(50)
+	local result,err = self.tcp:listen(maxCount)
 	if result == nil then  
 		log('tcp listen error:', err)
 		return false

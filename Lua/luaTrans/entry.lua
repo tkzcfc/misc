@@ -6,7 +6,7 @@
 
 local FileTransfer = require('FileTransfer')
 local system = require('system')
-local tcp = require('tcp')
+local tcp = require('TcpSocket')
 -- local cli = tcp.new('47.75.218.200', 1007)
 local cli = tcp.new('127.0.0.1', 7000)
 

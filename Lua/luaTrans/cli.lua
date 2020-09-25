@@ -31,7 +31,7 @@ print = logFile
 
 require('entry')
 
-local sleeptime = 1 / 100
+local sleeptime = 1 / 1000
 local begintime = system:gettime()
 local lasttime = begintime
 local curtime = begintime

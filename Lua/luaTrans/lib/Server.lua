@@ -2,7 +2,7 @@
 -- @Date   : 2020-07-22 18:31:16
 -- @remark : TCP服务端
 
-local tcp = require('tcp')
+local tcp = require('TcpSocket')
 
 local Server = class('Server')
 

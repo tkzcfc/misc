@@ -37,7 +37,7 @@ local file = [[./recv_test.exe]]
 
 
 local function do_svr()
-	local tcp = require('tcp')
+	local tcp = require('TcpSocket')
 	local svr = tcp.new('0.0.0.0', 7000)
 	if not svr:bind() then
 		print('bind fail')
@@ -91,7 +91,7 @@ end
 
 do_svr()
 
-local sleeptime = 1 / 100
+local sleeptime = 1 / 1000
 local begintime = system:gettime()
 local lasttime = begintime
 local curtime = begintime
