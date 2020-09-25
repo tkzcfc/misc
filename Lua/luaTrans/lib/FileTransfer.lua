@@ -9,7 +9,7 @@ local USE_BASE64_DECODE = true
 -- 是否使用json打包消息
 local USE_JSON_PACK_MSG = true
 -- 是否使用system库
-local USE_LUA_SYSTEM = true
+local USE_LUA_SYSTEM = false
 
 local json, base64, luasystem
 
