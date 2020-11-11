@@ -389,12 +389,16 @@ end]])
 	handle.write([[	
 function _Config.getData(Id)
     local _data = _Config._Data["id_"..Id]
-    if _data then return _data end
-    return nil
+    if not _data then return end
+    local t = {}
+    for k, v in pairs(keyMapIndex) do
+        t[k] = _data[v]
+    end
+    return t
 end
 
 function _Config.getItem(Id, Key)
-    local _data = _Config.getData(Id)
+    local _data = _Config._Data["id_"..Id]
     if _data then return _data[Key] end
     return nil
 end
@@ -402,7 +406,11 @@ end
 function _Config.Data()
     local _dataList = {}
     for k,_data in pairs(_Config._Data) do
-        if type(_data) == "table" then table.insert(_dataList, _data) end
+        local t = {}
+        for k, v in pairs(keyMapIndex) do
+            t[k] = _data[v]
+        end
+        table.insert(_dataList, t)
     end
     return _dataList
 end
@@ -415,44 +423,15 @@ end
 end
 
 
-local fils = {
-	"Carbon",
-}
+if arg[1] then
+	-- 输入文件
+	local inFile = string.gsub(arg[1], "[/\\]+", ".")
+	inFile = string.gsub(inFile, "%.lua$", "")
 
-for k,fileName in pairs(fils) do
-	local inFile = string.format("app.WDConfig.%s", fileName)
-	local outFile = string.format("app/WDConfig_new/%s.lua", fileName)
+	-- 输出文件
+	local outFile = arg[2]
 	
+	-- 执行优化
 	optimization_run(require(inFile), outFile)
 end
 
-
-
-
--- local keyMap = optimization_run(require("Carbon"), "out.lua")
-
-
--- local function compareTable(tab1, tab2)
--- 	for _,key in pairs(keyMap) do
--- 		if type(tab1[key]) ~= "table" then
--- 			if tab1[key] ~= tab2[key] then
--- 				print(key, tab1[key], tab2[key])
--- 			end
--- 		end
--- 	end
--- end
-
--- local system = require("system")
--- local s1 = system.gettime()
--- local old = require("old")
--- local s2 = system.gettime()
--- local out = require("out")
--- local s3 = system.gettime()
-
--- print(s2 - s1)
--- print(s3 - s2)
-
--- for k,data in pairs(old._Data) do
--- 	-- print(k)
--- 	compareTable(data, out._Data[k])
--- end
