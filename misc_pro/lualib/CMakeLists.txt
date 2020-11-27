@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.8)
+project(lualibs)
+
+add_subdirectory(lua)
+add_subdirectory(base64)
+add_subdirectory(lfs)
+add_subdirectory(lpeglabel)
+add_subdirectory(cjson)
+add_subdirectory(subprocess)
+add_subdirectory(luasystem)
+add_subdirectory(luasocket)
+add_subdirectory(md5)
+add_subdirectory(xxtea)
