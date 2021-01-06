@@ -245,7 +245,7 @@ https://github.com/JacobRBlomquist/Tiny-Endian
 
 https://github.com/ekg/endian
 
-
+### C++
 
 ```c++
 // from http://stackoverflow.com/a/8979034/238609
@@ -305,6 +305,10 @@ T to_little_endian(T u)
     }
 }
 ```
+
+
+
+### C实现的,非常全
 
 ```c
 //endian.h
@@ -659,6 +663,138 @@ int main()
 	writeUint32InBigEndian(memory,(uint32_t)0x12345678);
 	printHex(memory, 4);
 	printf("uint:%lu   %lu\n", readUint32InBigEndian(memory), (uint32_t)0x12345678);
+}
+```
+
+### scrcpy里面的
+
+```C
+
+static inline void
+buffer_write16be(uint8_t *buf, uint16_t value) {
+    buf[0] = value >> 8;
+    buf[1] = value;
+}
+
+static inline void
+buffer_write32be(uint8_t *buf, uint32_t value) {
+    buf[0] = value >> 24;
+    buf[1] = value >> 16;
+    buf[2] = value >> 8;
+    buf[3] = value;
+}
+
+static inline void
+buffer_write64be(uint8_t *buf, uint64_t value) {
+    buffer_write32be(buf, value >> 32);
+    buffer_write32be(&buf[4], (uint32_t) value);
+}
+
+static inline uint16_t
+buffer_read16be(const uint8_t *buf) {
+    return (buf[0] << 8) | buf[1];
+}
+
+static inline uint32_t
+buffer_read32be(const uint8_t *buf) {
+    return (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
+}
+
+static inline uint64_t
+buffer_read64be(const uint8_t *buf) {
+    uint32_t msb = buffer_read32be(buf);
+    uint32_t lsb = buffer_read32be(&buf[4]);
+    return ((uint64_t) msb << 32) | lsb;
+}
+
+```
+
+
+
+
+
+
+
+
+
+## utf8
+
+```C
+
+// return the index to truncate a UTF-8 string at a valid position
+size_t
+utf8_truncation_index(const char *utf8, size_t max_len) {
+    size_t len = strlen(utf8);
+    if (len <= max_len) {
+        return len;
+    }
+    len = max_len;
+    // see UTF-8 encoding <https://en.wikipedia.org/wiki/UTF-8#Description>
+    while ((utf8[len] & 0x80) != 0 && (utf8[len] & 0xc0) != 0xc0) {
+        // the next byte is not the start of a new UTF-8 codepoint
+        // so if we would cut there, the character would be truncated
+        len--;
+    }
+    return len;
+}
+```
+
+## windows宽字节转换
+
+```C
+
+#ifdef _WIN32
+# include <windows.h>
+# include <tchar.h>
+
+// convert a UTF-8 string to a wchar_t string
+// returns the new allocated string, to be freed by the caller
+wchar_t *
+utf8_to_wide_char(const char *utf8) {
+    int len = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, NULL, 0);
+    if (!len) {
+        return NULL;
+    }
+
+    wchar_t *wide = malloc(len * sizeof(wchar_t));
+    if (!wide) {
+        return NULL;
+    }
+
+    MultiByteToWideChar(CP_UTF8, 0, utf8, -1, wide, len);
+    return wide;
+}
+
+char *
+utf8_from_wide_char(const wchar_t *ws) {
+    int len = WideCharToMultiByte(CP_UTF8, 0, ws, -1, NULL, 0, NULL, NULL);
+    if (!len) {
+        return NULL;
+    }
+
+    char *utf8 = malloc(len);
+    if (!utf8) {
+        return NULL;
+    }
+
+    WideCharToMultiByte(CP_UTF8, 0, ws, -1, utf8, len, NULL, NULL);
+    return utf8;
+}
+
+#endif
+```
+
+## scrcpy里面的浮点数转定点数
+
+```C
+static uint16_t
+to_fixed_point_16(float f) {
+    assert(f >= 0.0f && f <= 1.0f);
+    uint32_t u = f * 0x1p16f; // 2^16
+    if (u >= 0xffff) {
+        u = 0xffff;
+    }
+    return (uint16_t) u;
 }
 ```
 
