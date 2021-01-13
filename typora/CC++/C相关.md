@@ -607,7 +607,7 @@ void printHex(const unsigned char* value, const int len)
 		printf("%s ", buf);
 	}
 	printf("\n");
-	free(data);
+	delete[]data;
 }
 
 

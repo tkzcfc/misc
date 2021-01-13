@@ -31,7 +31,7 @@ https://blog.csdn.net/qq_28644183/article/details/71629908
 
 
 -- 测试:
-function func(a1, a2, a3)
+function func(a1, a2)
 	print("func arg", a1, a2)
 	if a2 > 5 then
 		return
@@ -48,6 +48,8 @@ for k,v in func, 1, 2, 3, 4, 5 do --此处只有参数1 2生效
 		break
 	end
 end
+
+
 
 --[[
 模拟 ipairs

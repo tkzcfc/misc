@@ -30,11 +30,13 @@ function CycleListView:ctor(size)
 	self.queFreeCell = {}
 	self.arrAllCell = {}
 	self.arrLogicNode = {}
+	
+	-- 滚动方向
+	self:setDirection(HORIZONTAL)
 
 	self.pageMode = false
 	self:setZoomEnabled(false)
 	self:setBoundCollisionEnabled(false)
-	self:setDirection(0)
 	self:setDefaultScrollSpeed(kDefaultScrollSpeed)
 	self:setDefaultScrollMaxTime(0.3)
 	self:setTurnPageThreshold(kDefaultTurnPageThreshold)
@@ -310,11 +312,6 @@ function CycleListView:loadList(isFreeze)
 	self:onChangePosition(0, 0)
 end
 
--- @brief 设置滚动方向
--- @param value 0水平 1垂直
-function CycleListView:setDirection(value)
-	self.direction = value
-end
 
 -- @brief 获取某个cell渲染节点
 -- @param index cell的下标 从1开始
@@ -551,11 +548,10 @@ function CycleListView:diff(i)
 end
 
 function CycleListView:onChangePosition(curx, cury)
+	CycleListView.super.onChangePosition(self, curx, cury)
 	if self.direction == HORIZONTAL then
-		CycleListView.super.onChangePosition(self, curx, 0)
 		self.offsetValue = self.container:getPositionX()
 	else
-		CycleListView.super.onChangePosition(self, 0, cury)
 		self.offsetValue = self.container:getPositionY()
 	end
 	if self.isRunCycle then

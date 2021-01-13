@@ -6,11 +6,23 @@ local radian_30 = math.pi / 6
 local kMaxAccelerationFactor = 1
 local kMinAccelerationFactor = 0.01
 
+
 local function lerp(p1, p2, alpha)
 	return p1 * (1 - alpha) + p2 * alpha
 end
 
+local function max(a, b)
+	if a > b then return a end
+	return b
+end
+
+local function min(a, b)
+	if a < b then return a end
+	return b
+end
+
 local table_remove = table.remove
+
 
 local EventType =
 {
@@ -19,6 +31,15 @@ local EventType =
 	EVENT_AUTOSCROLL_ENDED = 3,	-- 自动滚动结束
 	EVENT_NEW_CELL_CREATE  = 4,	-- 循环列表事件-有新的cell被创建
 }
+
+
+-- 水平方向定义
+local HORIZONTAL = 0
+-- 垂直方向定义
+local VERTICAL 	 = 1
+-- 垂直&水平方向定义
+local VERTICAL_HORIZONTAL = 2
+
 
 local PanZoomLayer = class("PanZoomLayer", function()
 	return ccui.Layout:create()
@@ -35,28 +56,40 @@ function PanZoomLayer:ctor(size)
 	self.isHolding 		  = false
 	self.accelerationFactor = 0.0
 
+	self.bounceRange = 0
+	self.panBoundsRect = cc.rect(0, 0, 0, 0)
+
 	-- 最大/小缩放系数
 	self.maxScale = 2.5
 	self.minScale = 0.3
-
+	-- 缩放灵敏度
 	self:setZoomFactor(1.0)
 
-	self.panBoundsRect = cc.rect(0, 0, display.width, display.height)
-
 	self:setContentSize(size)
+	-- 裁剪开启
 	self:setClippingEnabled(true)
-
-	-- 惯性启用
-	self:setInertiaScrollEnabled(true)
 
 	-- touch layer
 	self.container = cc.Layer:create()
 	self.container:setAnchorPoint(cc.p(0, 0))
 	self:addChild(self.container)
 
-	self:setContainerSize(self:getContentSize())
+	-- 设置容器大小
+	self:setContainerSize(size)
+	-- 滚动方向
+	self:setDirection(VERTICAL_HORIZONTAL)
+	-- 惯性启用
+	self:setInertiaScrollEnabled(true)
+	-- 默认不启用缩放
 	self:setZoomEnabled(false)
+	-- 默认启用边界碰撞
 	self:setBoundCollisionEnabled(true)
+	-- 默认不启用回弹
+	self:setBounceable(false)
+	-- 设置回弹范围
+	self:setBounceRange(100)
+	-- 设置回弹系数
+	self:setBounceFactor(0.35)
 
 	if self.enableNodeEvents then
 		self:enableNodeEvents()
@@ -129,6 +162,32 @@ end
 
 function PanZoomLayer:isBoundCollisionEnabled()
 	return self.boundCollisionEnable
+end
+
+-- @brief 是否启用回弹
+function PanZoomLayer:setBounceable(enable)
+	self.bounceable = enable
+end
+
+function PanZoomLayer:isBounceable()
+	return self.bounceable
+end
+
+-- @brief 设置回弹范围
+function PanZoomLayer:setBounceRange(value)
+	self.bounceRange = value
+
+	self.panBoundsRect_SB = cc.rect(
+		self.panBoundsRect.x - value,
+		self.panBoundsRect.y - value,
+		self.panBoundsRect.width + value * 2,
+		self.panBoundsRect.height + value * 2
+		)
+end
+
+-- @brief 设置回弹系数
+function PanZoomLayer:setBounceFactor(value)
+	self.bounceFactor = value
 end
 
 --@brief 设置容器缩放
@@ -251,7 +310,22 @@ function PanZoomLayer:setAnimationEaseFunc(func)
 	self.easeFunc = func
 end
 
+-- @brief 设置滚动方向
+-- @param value 0水平 1垂直 2垂直&水平
+function PanZoomLayer:setDirection(value)
+	self.direction = value
+end
+
 --------------------------------------------------------- private ---------------------------------------------------------
+
+function PanZoomLayer:selfVisible(node)
+	if node == nil then return true end
+	
+	if node:isVisible() then
+		return self:selfVisible(node:getParent())
+	end
+	return false
+end
 
 function PanZoomLayer:_enableTouch()
 	self:_disenableTouch()
@@ -261,6 +335,10 @@ function PanZoomLayer:_enableTouch()
 
 	listener:registerScriptHandler(function(touch, event)
 		if #self.touches == 1 and not self.zoomEnable then
+			return false
+		end
+
+		if not self:selfVisible(self) then
 			return false
 		end
 
@@ -315,7 +393,13 @@ function PanZoomLayer:update(dt)
 	if #self.touches == 0 then
 		local adderX = self.deltaSum.x * self.accelerationFactor
 		local adderY = self.deltaSum.y * self.accelerationFactor
-		self:onChangePosition(adderX, adderY)
+
+		if self:checkSpringback() then
+			self.accelerationFactor = 0
+			self:doSpringback()
+		else
+			self:onChangePosition(adderX, adderY)
+		end
 	end
 end
 
@@ -349,6 +433,21 @@ function PanZoomLayer:onTouchesMoved(point)
 		local touch = self.touches[1]
 
 		local deltaPosition = cc.p(touch.x - touch.previousPoint.x, touch.y - touch.previousPoint.y)
+
+		if self.direction == HORIZONTAL then deltaPosition.y = 0 end
+		if self.direction == VERTICAL then deltaPosition.x = 0 end
+
+		if self.bounceable then
+			local ix, iy, ax, ay = self:_containerOffsetRange(false)
+			local curx, cury = self.container:getPosition()
+			if curx < ix or curx > ax then
+				deltaPosition.x = deltaPosition.x * self.bounceFactor
+			end
+			if cury < iy or cury > ay then
+				deltaPosition.y = deltaPosition.y * self.bounceFactor
+			end
+		end
+
 		self:onChangePosition(deltaPosition.x, deltaPosition.y)
 
 		local prevAngle = cc.pToAngleSelf(self.prevDeltaPoint)
@@ -404,8 +503,45 @@ function PanZoomLayer:onTouchesEnded(point)
 			break
 		end
 	end
+
+	if #self.touches == 0 then
+		self:doSpringback()
+	end
 end
 
+-- @brief 检测是否需要回弹
+function PanZoomLayer:checkSpringback()
+	if not self.boundCollisionEnable then return false end
+	if not self.bounceable then return false end
+
+	local ix, iy, ax, ay = self:_containerOffsetRange(false)
+	local curx, cury = self.container:getPosition()
+
+	local runTag = false
+	local tox, toy = curx, cury
+	if curx < ix or curx > ax or cury < iy or cury > ay then
+		runTag = true
+	end
+
+	if curx < ix then tox = ix end
+	if curx > ax then tox = ax end
+	if cury < iy then toy = iy end
+	if cury > ay then toy = ay end
+
+	return runTag, tox, toy
+end
+
+-- @brief 开始回弹逻辑
+function PanZoomLayer:doSpringback()
+	local runTag, tox, toy = self:checkSpringback()
+	if runTag then
+		self:performedAnimatedScroll(cc.p(tox, toy), 0.15)
+	end
+end
+
+-- @brief 设置容器缩放
+-- @param zoom 缩放值
+-- @param pos 容器坐标点(缩放的锚点)
 function PanZoomLayer:_setContainerZoomPos(zoom, pos)
 	local realCurPosLayer1 = self.container:convertToNodeSpace(self:convertToWorldSpace(pos))
 
@@ -419,6 +555,7 @@ function PanZoomLayer:_setContainerZoomPos(zoom, pos)
 	self:onChangePosition(deltaX * curScale, deltaY * curScale)
 end
 
+-- @brief 更新碰撞区域
 function PanZoomLayer:_updateBoundsRect(size)
 	local curSize = self:getContentSize()
 
@@ -432,55 +569,31 @@ function PanZoomLayer:_updateBoundsRect(size)
 	else
 		self.panBoundsRect = cc.rect(x, y, size.width - x, size.height - y)
 	end
+	self.panBoundsRect_SB = cc.rect(
+		self.panBoundsRect.x - self.bounceRange,
+		self.panBoundsRect.y - self.bounceRange,
+		self.panBoundsRect.width + self.bounceRange * 2,
+		self.panBoundsRect.height + self.bounceRange * 2
+		)
 end
 
-function PanZoomLayer:_boundCollisionTest(curx, cury)
+-- @brief 获取offset范围
+-- @param isSpringback 是否是回弹范围
+function PanZoomLayer:_containerOffsetRange(isSpringback)
 	local scale = self.container:getScale()
 	local size  = self.containerSize
 
-	local boundBox = cc.rect(curx, cury, size.width * scale, size.height * scale)
-
-	local left 	 = cc.rectGetMinX(boundBox)
-	local right  = cc.rectGetMaxX(boundBox)
-	local top 	 = cc.rectGetMaxY(boundBox)
-	local bottom = cc.rectGetMinY(boundBox)
-
-    local min_x = cc.rectGetMinX(self.panBoundsRect)
-    local max_x = cc.rectGetMaxX(self.panBoundsRect)
-    local min_y = cc.rectGetMinY(self.panBoundsRect)
-    local max_y = cc.rectGetMaxY(self.panBoundsRect)
-
-    local arLeft 	= min_x
-    local arRight 	= max_x - boundBox.width
-    local arTop 	= max_y - boundBox.height
-    local arBottom 	= min_y
-
-    if arRight > arLeft then
-    	if left < min_x then
-    		curx = arLeft
-    	end
-    	if right > max_x then
-    		curx = arRight
-    	end
-    else
-    	if right > max_x or left < min_x then
-    		curx = arLeft
-    	end
+	local rect = self.panBoundsRect
+	if self.bounceable and isSpringback then
+		rect = self.panBoundsRect_SB
 	end
-    
-    if arTop > arBottom then
-    	if bottom < min_y then
-    		cury = arBottom
-    	end
-    	if top > max_y then
-    		cury = arTop
-    	end
-    else
-    	if bottom < min_y or top > max_y then
-    		cury = arBottom
-    	end
-	end
-	return curx, cury
+
+    local min_x = cc.rectGetMinX(rect)
+    local max_x = cc.rectGetMaxX(rect)
+    local min_y = cc.rectGetMinY(rect)
+    local max_y = cc.rectGetMaxY(rect)
+
+    return min_x, min_y, max_x - size.width * scale, max_y - size.height * scale
 end
 
 function PanZoomLayer:onChangeScale(curScale)
@@ -508,8 +621,13 @@ function PanZoomLayer:onChangePosition(offsetx, offsety)
 		return
 	end
 
-    self.container:setPosition(self:_boundCollisionTest(curx, cury))
+	local ix, iy, ax, ay = self:_containerOffsetRange(true)
+	curx = max(curx, ix)
+	cury = max(cury, iy)
+	curx = min(curx, ax)
+	cury = min(cury, ay)
 
+	self.container:setPosition(curx, cury)
 	self:dispatchEvent(EventType.EVENT_SCROLLING)
 end
 

@@ -267,7 +267,7 @@ print("capacity", hash.capacity)
 
 
 print("优化操作测试----------------------------->>")
--- 大量删除操作之后调用此函数,会重构一下hash表结构,是否不使用的内存
+-- 大量删除操作之后调用此函数,会重构一下hash表结构,释放不使用的内存
 hash:optimize()
 print("size", hash.size)
 print("capacity", hash.capacity)

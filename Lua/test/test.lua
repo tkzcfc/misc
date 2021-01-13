@@ -40,9 +40,9 @@ local function myPairs(t)
 	return next, t, nil
 end
 
--- for k,v in myPairs(table) do
--- 	print(k, "=", v)
--- end
+for k,v in myPairs(table) do
+	print(k, "=", v)
+end
 
 table.foreach(table, function(k, v)
 	print(k, "=", v)

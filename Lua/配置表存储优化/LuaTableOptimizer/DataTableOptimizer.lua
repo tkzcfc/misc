@@ -2,10 +2,6 @@
 -- @Date   : 2020-10-09 15:59:59
 -- @remark : table表优化
 
--- 是否优化key
-local OPTIMIZATION_KEY = true
--- 是否提取默认值
-local OPTIMIZATION_DEFAULT_VALUE = false
 -- 是否使用最小生成
 local OPTIMIZATION_LEAST = true
 
@@ -67,9 +63,11 @@ local function isIndexTable(t)
 
 	local count = 0
 	for k,v in pairs(t) do
-		count = count + 1
+		if type(k) ~= "number" then return false end
+		if k <= 0 then return false end
+		if k > count then count = k end
 	end
-	return count <= #t
+	return true, count
 end
 
 local function encodeEscapeString( s )
@@ -118,7 +116,7 @@ local function format_lua_value_ex(tab, autoIndent)
 
     local function format_lua_table (lua_table, indent)
         indent = indent or 0
-        local isIndexTab = isIndexTable(lua_table)
+        local isIndexTab, tabCount = isIndexTable(lua_table)
         local lastIndex = 0
         
         local function walkTab(k, v)
@@ -168,9 +166,8 @@ local function format_lua_value_ex(tab, autoIndent)
             	end
             end
         end
-
         if isIndexTab then
-        	for i = 1, #lua_table do
+        	for i = 1, tabCount do
         		walkTab(i, lua_table[i])
         	end
         else
@@ -178,6 +175,10 @@ local function format_lua_value_ex(tab, autoIndent)
         		walkTab(k, v)
         	end
     	end
+
+	    if #lines > 0 then
+	    	lines[#lines] = string.gsub(lines[#lines], ",$", "")
+	    end
     end
     format_lua_table(tab, 1)
 
@@ -186,13 +187,15 @@ local function format_lua_value_ex(tab, autoIndent)
     return lines
 end
 
--- @brief 格式化lua变量(主要是table)
+-- @brief 格式化lua变量
 format_lua_value = function(tab)
 	return table.concat( format_lua_value_ex(tab, true), "\n" )
 end
 
 
-
+-- @brief 执行优化
+-- @param originTable 原始table表
+-- @param 优化后输出文件
 function optimization_run(originTable, outFile)
 	local originTableLength = originTable._length
 	
@@ -215,6 +218,10 @@ function optimization_run(originTable, outFile)
 			keyMapIndex = keyMapIndex_tmp
 		end
 	end
+	table.sort(keyMap, function(a, b) return a < b end)
+	for k,v in pairs(keyMap) do
+		keyMapIndex[v] = k
+	end
 	
 	local function walkData(func)
 		for _,data in pairs(originTable._Data) do
@@ -226,118 +233,51 @@ function optimization_run(originTable, outFile)
 		end
 	end
 	
-	-- 默认值提取
-	local defaultValueSet = {}
-	if OPTIMIZATION_DEFAULT_VALUE then
-		-- 获取默认值
-		local valueInfo = {}
-		local keyCount = {}
-		for k,key in pairs(keyMap) do
-			walkData(function(curKey, curValue)
-				if key == curKey then
-					if not keyCount[key] then
-						keyCount[key] = 1
-					else
-						keyCount[key] = keyCount[key] + 1
-					end
-		
-					if type(curValue) ~= "table" then
-						local uniqueKey = tostring(curValue)
-						local info = valueInfo[key]
-						if info == nil then
-							info = {}
-							info[uniqueKey] = {count = 1, value = curValue}
-							valueInfo[key] = info
-						else
-							if info[uniqueKey] then
-								info[uniqueKey].count = info[uniqueKey].count + 1
-							else
-								info[uniqueKey] = {count = 1, value = curValue}
-							end
-						end
-					end
-					return true
-				end
-			end)
+	-- 使用数字索引代替key
+	local newData = {}
+	for k,data in pairs(originTable._Data) do
+		local copyData = {}
+		for key,idx in pairs(keyMapIndex) do
+			copyData[idx] = data[key]
 		end
-		
-		-- 获取默认值
-		for k,key in pairs(keyMap) do
-			if keyCount[key] == originTableLength then
-				local info = valueInfo[key]
-				local maxValue, maxCount = 0, 0
-			
-				if info then
-					for _, v in pairs(info) do
-						if maxCount < v.count then
-							maxCount = v.count
-							maxValue = v.value
-						end
-					end
-				end
-			
-				if maxCount > 1 then
-					defaultValueSet[key] = maxValue
-				end
-			end
-		end
-		
-		-- 删除默认值
-		for k,v in pairs(defaultValueSet) do
-			walkData(function(curKey, curValue, curTable)
-				if curKey == k then
-					if curValue == v then
-						curTable[curKey] = nil
-					end
-					return true
-				end
-			end)
-		end
+		newData[k] = copyData
 	end
-	
-	if OPTIMIZATION_KEY then
-		-- 使用数字代替key
-		local newData = {}
-		for k,data in pairs(originTable._Data) do
-			local copyData = {}
-			for keyName, value in pairs(data) do
-				copyData[keyMapIndex[keyName]] = value
-			end
-			newData[k] = copyData
-		end
-		originTable._Data = newData
-	end
+	originTable._Data = newData
+
 	
 	local handle = createFileWriter(outFile, "wb")
 	
-	if OPTIMIZATION_KEY then
-		handle.write("local keyMap = ")
-		handle.write(format_lua_value(keyMap))
-		handle.write("\n\n")
-		
-		handle.write("local keyMapIndex = ")
-		handle.write(format_lua_value(keyMapIndex))
-		handle.write("\n\n")
-	end
+	handle.write("local keyMap = ")
+	handle.write(format_lua_value(keyMap))
+	handle.write("\n\n")
 	
-	if OPTIMIZATION_DEFAULT_VALUE then
-		handle.write("local defaultValueSet = ")
-		handle.write(format_lua_value(defaultValueSet))
-		handle.write("\n\n")
-	end
+	handle.write("local keyMapIndex = {}\n")
+	handle.write("for k,v in pairs(keyMap) do\n")
+	handle.write("    keyMapIndex[v] = k\n")
+	handle.write("end\n")
+	handle.write("\n\n")
 	
-	
-	handle.write("\nlocal _Config = {}\n")
+	handle.write("\nlocal _Config = {}")
+	handle.write("\nlocal t = {}")
+	handle.write("\n_Config._Data = t\n")
 	
 	if OPTIMIZATION_LEAST then
-		handle.write("\n_Config._Data = {}\n")
+		local datakeys = {}
 		for k,v in pairs(originTable._Data) do
-			handle.write("_Config._Data." .. tostring(k) .. " = ")
+			table_insert(datakeys, k)
+		end
+		table.sort(datakeys, function(a, b) return a < b end)
+
+		-- 保证每次输出顺序一致
+		for i = 1, #datakeys do
+			local k = datakeys[i]
+			local v = originTable._Data[k]
+			handle.write("t." .. tostring(k) .. " = ")
 			handle.write(table.concat( format_lua_value_ex(v), "" ))
 			handle.write("\n")
 		end
 	else
-		handle.write("_Config._Data = ")
+		handle.write("t = ")
 		handle.write(format_lua_value(originTable._Data))
 	end
 	
@@ -345,28 +285,11 @@ function optimization_run(originTable, outFile)
 	handle.write("\n")
 
 
-	if OPTIMIZATION_KEY then
+	handle.write("\n_Config.keyMapIndex = keyMapIndex")
+	handle.write("\n_Config.keyMap = keyMap")
+	handle.write("\n\n")
 
-		handle.write("\n_Config.keyMapIndex = keyMapIndex")
-		handle.write("\n_Config.keyMap = keyMap")
-		handle.write("\n\n")
-
-		if OPTIMIZATION_DEFAULT_VALUE then
-			handle.write([[
-local meta = {
-    __index = function(tab, key)
-        local r = rawget(tab, keyMapIndex[key])
-        if r ~= nil then
-        	return r
-        end
-        return defaultValueSet[key]
-    end
-}
-for k,v in pairs(_Config._Data) do
-    setmetatable(v, meta)
-end]])
-		else
-			handle.write([[
+	handle.write([[
 local meta = {
     __index = function(tab, key)
         return rawget(tab, keyMapIndex[key])
@@ -374,19 +297,8 @@ local meta = {
 }
 for k,v in pairs(_Config._Data) do
     setmetatable(v, meta)
-end]])
-		end
-	else
-		if OPTIMIZATION_DEFAULT_VALUE then
-			handle.write([[
-defaultValueSet.__index = defaultValueSet
-for k,v in pairs(_Config._Data) do
-	setmetatable(v, defaultValueSet)
-end]])
-		end
-	end
+end
 
-	handle.write([[	
 function _Config.getData(Id)
     local _data = _Config._Data["id_"..Id]
     if not _data then return end
@@ -405,12 +317,12 @@ end
 
 function _Config.Data()
     local _dataList = {}
-    for k,_data in pairs(_Config._Data) do
+    for id,_data in pairs(_Config._Data) do
         local t = {}
         for k, v in pairs(keyMapIndex) do
             t[k] = _data[v]
         end
-        table.insert(_dataList, t)
+        _dataList[#_dataList + 1] = t
     end
     return _dataList
 end
@@ -422,16 +334,42 @@ end
 	return keyMap
 end
 
+-- @brief 校验内容是否一致
+local function check_content(oldFile, newFile)
+	package.loaded[oldFile] = nil
+	package.loaded[newFile] = nil
+	local oldCont = require(oldFile)
+	local newCont = require(newFile)
+
+	local keyMap = newCont.keyMap
+
+	for _,data in pairs(oldCont._Data) do
+		local id = data.Id
+		for _, key in pairs(keyMap) do
+			if newCont.getItem(id, key) ~= oldCont.getItem(id, key) then
+				print("error:", oldFile, id, key, oldCont.getItem(id, key), newCont.getItem(id, key))
+			end
+		end
+	end
+
+end
+
+local function clsLuaPath(filename)
+	local inFile = string.gsub(filename, "[/\\]+", ".")
+	inFile = string.gsub(inFile, "%.lua$", "")
+	return inFile
+end
 
 if arg[1] then
 	-- 输入文件
-	local inFile = string.gsub(arg[1], "[/\\]+", ".")
-	inFile = string.gsub(inFile, "%.lua$", "")
-
+	local inFile = clsLuaPath(arg[1])
 	-- 输出文件
 	local outFile = arg[2]
 	
 	-- 执行优化
 	optimization_run(require(inFile), outFile)
+
+	-- 检查内容是否一致
+	-- check_content(inFile, clsLuaPath(outFile))
 end
 
