@@ -57,3 +57,36 @@ https://github.com/johnmcfarlane/cnl
 
 
 
+### 着色器转换
+
+```
+SPIRV-Cross是一款用于将SPIR-V解析并将其转换为其他着色器语言的工具。
+
+https://github.com/KhronosGroup/SPIRV-Cross
+Lumos引擎使用
+```
+
+
+
+### 用于游戏和其他应用程序的实时，纳秒级分辨率，远程遥测，混合帧和采样分析器。
+
+```
+https://github.com/wolfpld/tracy
+Lumos引擎使用
+```
+
+### C++序列化库
+
+```
+https://github.com/USCiLab/cereal
+Lumos引擎使用
+```
+
+### 3D策略游戏
+
+```
+https://github.com/Warzone2100/warzone2100
+
+另一款也是策略游戏 http://www.freeciv.org/
+```
+
