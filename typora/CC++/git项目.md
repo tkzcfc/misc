@@ -90,3 +90,16 @@ https://github.com/Warzone2100/warzone2100
 另一款也是策略游戏 http://www.freeciv.org/
 ```
 
+
+
+### HlslTools
+
+#### 一个Visual Studio扩展，为编辑高级着色语言（HLSL）文件提供增强的支持
+
+```
+一个Visual Studio扩展，为编辑高级着色语言（HLSL）文件提供增强的支持
+
+https://github.com/tgjones/HlslTools
+
+```
+
