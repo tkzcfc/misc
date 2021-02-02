@@ -798,3 +798,133 @@ to_fixed_point_16(float f) {
 }
 ```
 
+
+
+## NoticeCenter使用示例
+
+```C++
+#include <iostream>
+#include "NoticeCenter.h"
+
+
+//广播名称1
+#define NOTICE_NAME1 "NOTICE_NAME1"
+//广播名称2
+#define NOTICE_NAME2 "NOTICE_NAME2"
+
+
+template<typename T>
+void print(T& t) {
+	cout << "lvalue" << endl;
+}
+template<typename T>
+void print(T&& t) {
+	cout << "rvalue" << endl;
+}
+
+template<typename T>
+void TestForward(T && v) {
+	print(v);
+	print(std::forward<T>(v));
+	print(std::move(v));
+}
+
+std::unordered_map<const char*, void*> callMap;
+
+template <typename FUNC>
+void registerCall(const char* name, FUNC&& func)
+{
+	typedef typename function_traits<typename std::remove_reference<FUNC>::type>::stl_function_type funType;
+	auto call = new funType(std::forward<FUNC>(func));
+
+	callMap[name] = (void*)call;
+}
+
+template <typename ...Args>
+void emit(const char* name, Args&& ... args)
+{
+	void* p = callMap[name];
+	typedef std::function<void(decltype(std::forward<Args>(args))...)> funcType;
+	funcType* call = (funcType*)p;
+	(*call)(std::forward<Args>(args)...);
+}
+
+
+int main() {
+	const char* event1 = "event_1";
+
+	registerCall(event1, [](int a, const char* b) 
+	{
+		printf("a = %d, b = %s\n", a, b);
+	});
+
+	emit(event1, 10, (const char*)"hahahah");
+
+
+	auto func = [](int a, const char* b)
+		{
+			printf("a = %d, b = %s\n", a, b);
+		};
+	typedef decltype(func) fType;
+	fType* f1 = new fType(func);
+
+	(*f1)(10, "hahaha");
+
+	//TestForward(1);
+	//int x = 1;
+	//TestForward(x);
+	//TestForward(std::forward<int>(x));
+
+
+	////对事件NOTICE_NAME1新增一个监听
+	////addListener方法第一个参数是标签，用来删除监听时使用
+	////需要注意的是监听回调的参数列表个数类型需要与emitEvent广播时的完全一致，否则会有无法预知的错误
+	//NoticeCenter::Instance().addListener(0, NOTICE_NAME1,
+	//	[](int &a, const char * &b, double &c, string &d) {
+	//	std::cout << "NOTICE_NAME1 1 -------------> " << a << " " << b << " " << c << " " << d << std::endl;
+	//	NoticeCenter::Instance().delListener(0, NOTICE_NAME1);
+
+	//	NoticeCenter::Instance().addListener(0, NOTICE_NAME1,
+	//		[](int &a, const char * &b, double &c, string &d) {
+	//		std::cout << "NOTICE_NAME1 2 -------------> " << a << " " << b << " " << c << " " << d << std::endl;
+	//	});
+	//});
+
+	////监听NOTICE_NAME2事件
+	//NoticeCenter::Instance().addListener(0, NOTICE_NAME2,
+	//	[](string &d, double &c, const char *&b, int &a) {
+	//	std::cout << "NOTICE_NAME2 1 -------------> " << a << " " << b << " " << c << " " << d << std::endl;
+	//	NoticeCenter::Instance().delListener(0, NOTICE_NAME2);
+
+	//	NoticeCenter::Instance().addListener(0, NOTICE_NAME2,
+	//		[](string &d, double &c, const char *&b, int &a) {
+	//		std::cout << "NOTICE_NAME2 2 -------------> " << a << " " << b << " " << c << " " << d << std::endl;
+	//	});
+
+	//});
+
+	//int count = 0;
+	//int a = 0;
+	//while (true) {
+	//	const char *b = "b";
+	//	double c = 3.14;
+	//	string d("d");
+	//	//每隔1秒广播一次事件，如果无法确定参数类型，可加强制转换
+	//	NoticeCenter::Instance().emitEvent(NOTICE_NAME1, ++a, (const char *)"b", c, d);
+	//	NoticeCenter::Instance().emitEvent(NOTICE_NAME2, d, c, b, a);
+	//	::Sleep(1000); // sleep 1 second
+
+	//	if (++count > 3)
+	//	{
+	//		break;
+	//	}
+	//}
+
+	//testFunc();
+
+	system("pause");
+	return 0;
+}
+
+```
+
