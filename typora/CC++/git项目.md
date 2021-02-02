@@ -109,5 +109,11 @@ https://github.com/tgjones/HlslTools
 https://github.com/Genymobile/gnirehtet
 ```
 
+### 状态机编辑器
+
+```
+https://github.com/LeeYip/cocos-animator
+```
+
 
 
