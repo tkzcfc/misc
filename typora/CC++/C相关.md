@@ -928,3 +928,33 @@ int main() {
 
 ```
 
+## 二分法开方实现
+
+```c++
+void main()
+{
+	double value = 3.0;
+	double left = 0.0, mid = value / 2, right = value, last;
+
+	while (true)
+	{
+		if (mid * mid > value)
+		{
+			right = mid;
+		}
+		else
+		{
+			left = mid;
+		}
+		last = mid;
+		mid = left + (right - left) / 2.0;
+		if (abs(last - mid) < 1e-5)break;
+	}
+	printf("c1:%lf\n", mid);
+}
+```
+
+
+
+
+

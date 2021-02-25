@@ -115,5 +115,15 @@ https://github.com/Genymobile/gnirehtet
 https://github.com/LeeYip/cocos-animator
 ```
 
+# cocos creater
+
+### creater实现的翻牌效果
+
+```
+https://github.com/chenbenying/cocos-creator-2.4.3shader-card
+
+https://forum.cocos.org/t/topic/106108
+```
+
 
 
