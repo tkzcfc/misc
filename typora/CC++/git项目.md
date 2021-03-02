@@ -1,4 +1,4 @@
-# C/C++相关
+# 
 
 ## C&lua
 
@@ -114,6 +114,14 @@ https://github.com/Genymobile/gnirehtet
 ```
 https://github.com/LeeYip/cocos-animator
 ```
+
+### Windows端的文本对比工具
+
+```
+https://github.com/WinMerge/winmerge
+```
+
+
 
 # cocos creater
 
