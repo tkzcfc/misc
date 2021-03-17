@@ -1,5 +1,5 @@
 -- @Author : fangcheng
--- @Date   : 2020-07-15 10:59:38
+-- @Date   : 2020-07-18 10:59:38
 -- @remark : 循环滚动列表
 
 local PanZoomLayer = import(".PanZoomLayer")
