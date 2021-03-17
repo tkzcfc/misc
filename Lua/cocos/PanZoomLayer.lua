@@ -56,7 +56,8 @@ function PanZoomLayer:ctor(size)
 	self.isHolding 		  = false
 	self.accelerationFactor = 0.0
 
-	self.bounceRange = 0
+	self.bounceRangeX = 0
+	self.bounceRangeY = 0
 	self.panBoundsRect = cc.rect(0, 0, 0, 0)
 
 	-- 最大/小缩放系数
@@ -89,7 +90,9 @@ function PanZoomLayer:ctor(size)
 	-- 设置回弹范围
 	self:setBounceRange(100)
 	-- 设置回弹系数
-	self:setBounceFactor(0.35)
+	self:setBounceFactor(0.5)
+	-- 默认吞没事件
+	self:setSwallowTouches(true)
 
 	if self.enableNodeEvents then
 		self:enableNodeEvents()
@@ -174,14 +177,17 @@ function PanZoomLayer:isBounceable()
 end
 
 -- @brief 设置回弹范围
-function PanZoomLayer:setBounceRange(value)
-	self.bounceRange = value
+function PanZoomLayer:setBounceRange(value, yValue)
+	yValue = yValue or value
+
+	self.bounceRangeX = value
+	self.bounceRangeY = yValue
 
 	self.panBoundsRect_SB = cc.rect(
 		self.panBoundsRect.x - value,
-		self.panBoundsRect.y - value,
+		self.panBoundsRect.y - yValue,
 		self.panBoundsRect.width + value * 2,
-		self.panBoundsRect.height + value * 2
+		self.panBoundsRect.height + yValue * 2
 		)
 end
 
@@ -316,6 +322,14 @@ function PanZoomLayer:setDirection(value)
 	self.direction = value
 end
 
+-- @brief 是否吞噬触摸
+function PanZoomLayer:setSwallowTouches(value)
+	self.swallowTouch = value
+	if self.touchListener then
+		self.touchListener:setSwallowTouches(value)
+	end
+end
+
 --------------------------------------------------------- private ---------------------------------------------------------
 
 function PanZoomLayer:selfVisible(node)
@@ -331,7 +345,7 @@ function PanZoomLayer:_enableTouch()
 	self:_disenableTouch()
 
 	local listener = cc.EventListenerTouchOneByOne:create()
-	listener:setSwallowTouches(true)
+	listener:setSwallowTouches(self.swallowTouch)
 
 	listener:registerScriptHandler(function(touch, event)
 		if #self.touches == 1 and not self.zoomEnable then
@@ -569,12 +583,7 @@ function PanZoomLayer:_updateBoundsRect(size)
 	else
 		self.panBoundsRect = cc.rect(x, y, size.width - x, size.height - y)
 	end
-	self.panBoundsRect_SB = cc.rect(
-		self.panBoundsRect.x - self.bounceRange,
-		self.panBoundsRect.y - self.bounceRange,
-		self.panBoundsRect.width + self.bounceRange * 2,
-		self.panBoundsRect.height + self.bounceRange * 2
-		)
+	self:setBounceRange(self.bounceRangeX, self.bounceRangeY)
 end
 
 -- @brief 获取offset范围
