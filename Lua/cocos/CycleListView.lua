@@ -133,41 +133,54 @@ function CycleListView:scrollToPageDistance(index)
 	local offsetValue = 0
 	local curPageIndex = self:getCurrentPageIndex()
 
-	-- 如果摇滚动到的页面不是当前页，则计算最小滚动方式
 	if curPageIndex ~= index then
-		local stepCount = 0
-		local curIndex = curPageIndex
-		repeat
-			stepCount = stepCount + 1
-			curIndex = self:step(curIndex)
-			if curIndex == index then
-				break
+		-- 普通列表
+		if self.isNormalList then
+			local diffCount = curPageIndex - index
+
+			offsetValue = self:getCellOffsetInView(curPageIndex)
+			if self.direction == HORIZONTAL then
+				offsetValue = offsetValue - diffCount * self.cellSize.width
+			else
+				offsetValue = offsetValue - diffCount * self.cellSize.height			
 			end
-		until(false)
-
-		local diffCount = 0
-		curIndex = curPageIndex
-		repeat
-			diffCount = diffCount + 1
-			curIndex = self:diff(curIndex)
-			if curIndex == index then
-				break
-			end
-		until(false)
-
-		offsetValue = self:getCellOffsetInView(curPageIndex)
-
-		local cellValue = self.cellSize.height
-		if self.direction == HORIZONTAL then
-			cellValue = self.cellSize.width
-		end
-
-		-- 正向滚动移动距离最小
-		if stepCount < diffCount then
-			offsetValue = offsetValue + stepCount * cellValue		
-		-- 逆向滚动移动距离最小
+		-- 虚拟列表
 		else
-			offsetValue = offsetValue - diffCount * cellValue
+			-- 计算滚动到目标界面最小距离
+			local stepCount = 0
+			local curIndex = curPageIndex
+			repeat
+				stepCount = stepCount + 1
+				curIndex = self:step(curIndex)
+				if curIndex == index then
+					break
+				end
+			until(false)
+
+			local diffCount = 0
+			curIndex = curPageIndex
+			repeat
+				diffCount = diffCount + 1
+				curIndex = self:diff(curIndex)
+				if curIndex == index then
+					break
+				end
+			until(false)
+
+			offsetValue = self:getCellOffsetInView(curPageIndex)
+
+			local cellValue = self.cellSize.height
+			if self.direction == HORIZONTAL then
+				cellValue = self.cellSize.width
+			end
+
+			-- 正向滚动移动距离最小
+			if stepCount < diffCount then
+				offsetValue = offsetValue + stepCount * cellValue		
+			-- 逆向滚动移动距离最小
+			else
+				offsetValue = offsetValue - diffCount * cellValue
+			end
 		end
 	else
 		offsetValue = self:getCellOffsetInView(index)
@@ -263,10 +276,14 @@ function CycleListView:loadList(isFreeze)
 	self.loadListTag = true
 
 	-- 移除多余的逻辑节点
-	for i = 1, #self.arrLogicNode - self.cellCount do
-		local node = table.remove(self.arrLogicNode)
-		node:onDestroy()
+	for k, v in pairs(self.arrLogicNode) do
+		v:onDestroy()
 	end
+	self.arrLogicNode = {}
+	-- for i = 1, #self.arrLogicNode - self.cellCount do
+	-- 	local node = table.remove(self.arrLogicNode)
+	-- 	node:onDestroy()
+	-- end
 	-- 添加缺少的逻辑节点
 	for i = #self.arrLogicNode + 1, self.cellCount do
 		local node = VirtualNode.new(self, i)
