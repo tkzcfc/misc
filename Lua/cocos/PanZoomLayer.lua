@@ -22,6 +22,7 @@ local function min(a, b)
 end
 
 local table_remove = table.remove
+local fabs = math.abs
 
 
 local EventType =
@@ -413,6 +414,9 @@ function PanZoomLayer:update(dt)
 			self:doSpringback()
 		else
 			self:onChangePosition(adderX, adderY)
+			if fabs(adderX) < 0.6 and fabs(adderY) < 0.6 then
+				self.accelerationFactor = 0
+			end
 		end
 	end
 end
@@ -466,7 +470,7 @@ function PanZoomLayer:onTouchesMoved(point)
 
 		local prevAngle = cc.pToAngleSelf(self.prevDeltaPoint)
 		local angle = cc.pToAngleSelf(deltaPosition)
-		if math.abs( prevAngle - angle ) <= radian_30 then
+		if fabs( prevAngle - angle ) <= radian_30 then
 			self.deltaSum = cc.p( 0, 0 )
 		end
 
