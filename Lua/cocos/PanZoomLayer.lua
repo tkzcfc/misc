@@ -521,6 +521,10 @@ function PanZoomLayer:onTouchesEnded(point)
 			break
 		end
 	end
+	
+	if self.isHolding then
+		return
+	end
 
 	if #self.touches == 0 then
 		self:doSpringback()
