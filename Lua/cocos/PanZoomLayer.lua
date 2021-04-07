@@ -257,6 +257,11 @@ function PanZoomLayer:setContentOffsetInDuration(offset, duration)
 	self:performedAnimatedScroll(cc.pAdd(curPosition, offset), duration)
 end
 
+-- @brief 获取容器滚动偏移
+function PanZoomLayer:getContentOffset()
+	return cc.p(self.container:getPosition())
+end
+
 -- @brief 开启容器滚动逻辑
 -- @param position 滚动的目标位置
 -- @param duration 动画持续时间
