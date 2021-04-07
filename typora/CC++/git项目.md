@@ -127,6 +127,13 @@ https://github.com/WinMerge/winmerge
 https://github.com/jmorton06/Lumos
 ```
 
+### 内网穿透
+
+```
+npc
+
+```
+
 
 
 # cocos creater
