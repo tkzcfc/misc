@@ -115,6 +115,14 @@ https://github.com/Genymobile/gnirehtet
 https://github.com/LeeYip/cocos-animator
 ```
 
+## 开源特效(粒子)编辑器(支持多种引擎)
+
+```
+https://github.com/effekseer/Effekseer
+```
+
+
+
 ### Windows端的文本对比工具
 
 ```
