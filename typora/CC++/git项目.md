@@ -134,6 +134,12 @@ npc
 
 ```
 
+## lua gc优化
+
+```
+https://github.com/Yu2erer/Lua-NOGC
+```
+
 
 
 # cocos creater
