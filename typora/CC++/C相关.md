@@ -86,6 +86,27 @@ unsigned char* HexToByte(const char* szHex)
 
     return pbBuf;
 }
+
+
+// 注意释放返回的数据
+char* bin2hex(unsigned char* bin, int binLength)
+{
+    static const char* hextable = "0123456789abcdef";
+    
+    int hexLength = binLength * 2 + 1;
+    char* hex = new char[hexLength];
+    memset(hex, 0, sizeof(char) * hexLength);
+    
+    int ci = 0;
+    for (int i = 0; i < 16; ++i)
+    {
+        unsigned char c = bin[i];
+        hex[ci++] = hextable[(c >> 4) & 0x0f];
+        hex[ci++] = hextable[c & 0x0f];
+    }
+    
+    return hex;
+}
 ```
 
 
